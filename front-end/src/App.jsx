@@ -32,6 +32,7 @@ import RecentLogins from './pages/AdminPages/RecentLogins';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ChangePassword from './pages/auth/ChangePassword';
 import CandyCrushGoalMap from './pages/UserPages/CandyCrushGoalMap';
+import ScanResume from './pages/UserPages/ScanResume';
 const App = () => {
   const { isLoading: authInitLoading } = useAuthInitialize();
   const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
@@ -64,6 +65,7 @@ const App = () => {
             <Route path='set-new-password' element={<SetNewPassword/>} />
             <Route path='feedback' element={<UserFeedBack/>} />
             <Route path="goal/:goalId/map" element={<CandyCrushGoalMap />} />
+            <Route path='check-resume' element={<ScanResume/>}/>
           </Route>
             <Route path='/admin' element={<AdminLayout/>}>
               <Route path='dashboard' element={<AdminDashBoard/>} />

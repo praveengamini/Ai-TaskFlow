@@ -11,7 +11,7 @@ import {
   Plus,
   CheckCircle,
   Clock,
-  MessageSquare
+  MessageSquare,FileScan
 } from 'lucide-react';
 import { logoutUser } from '@/store/auth';
 import { getGoalStats } from '@/store/task';
@@ -109,6 +109,12 @@ const UserSideBar = () => {
       label: 'Dashboard',
       path: '/user/dashboard',
       description: 'View analytics'
+    },
+      {
+      icon: FileScan,
+      label: 'Resume Check',
+      path: '/user/check-resume',
+      description: 'Check Resume Score'
     },
     {
       icon: MessageSquare,

@@ -3,8 +3,13 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getGoalById, updateDailyTaskStatus, updateWeeklyTaskStatus, updateMonthlyTaskStatus } from '@/store/task'
 import { toast } from 'sonner'
-import { ArrowLeft, Calendar, Clock, Target, CheckCircle2, Circle, CalendarDays, Timer, Map, Gamepad2 } from 'lucide-react'
-
+import { ArrowLeft, Calendar, Clock, Target, CheckCircle2, Circle, CalendarDays, Timer, Map, Gamepad2, BookOpen, ExternalLink, Video, FileText, Link, X } from 'lucide-react'
+import {   Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,DialogOverlay } from '@/components/ui/dialog'
 const GoalDetail = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -12,6 +17,8 @@ const GoalDetail = () => {
     const { user } = useSelector((state) => state.auth)
     const { selectedGoal, loading, error } = useSelector((state) => state.task)
     const [activeTab, setActiveTab] = useState('daily')
+    const [resourcesDialog, setResourcesDialog] = useState(false)
+    const [selectedResources, setSelectedResources] = useState([])
     
     // Local state to track individual task completion
     const [taskStates, setTaskStates] = useState({
@@ -126,6 +133,26 @@ const GoalDetail = () => {
         return taskStates[taskType][groupIndex]?.[taskIndex] || false
     }
 
+    const handleResourcesClick = (resources, groupLabel) => {
+        setSelectedResources({ resources, groupLabel })
+        setResourcesDialog(true)
+    }
+
+    const getResourceIcon = (type) => {
+        switch (type?.toLowerCase()) {
+            case 'video':
+                return <Video className="w-4 h-4" />
+            case 'article':
+            case 'blog':
+                return <FileText className="w-4 h-4" />
+            case 'link':
+            case 'website':
+                return <Link className="w-4 h-4" />
+            default:
+                return <ExternalLink className="w-4 h-4" />
+        }
+    }
+
     const renderTaskList = (taskGroups, taskType) => {
         if (!taskGroups || taskGroups.length === 0) {
             return (
@@ -143,20 +170,37 @@ const GoalDetail = () => {
                 {taskGroups.map((group, groupIndex) => {
                     const { completed, total } = getTaskCompletionCount(taskType, groupIndex)
                     const isGroupCompleted = completed === total && total > 0
+                    const hasResources = group.resources && group.resources.length > 0
                     
                     return (
                         <div key={groupIndex} className="bg-gray-50 rounded-lg p-3 sm:p-4">
-                            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center">
-                                <span className="bg-green-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-0 sm:mr-3 inline-block w-fit">
-                                    {group.label}
-                                </span>
-                                <span className="text-xs sm:text-sm text-gray-600">
-                                    ({completed}/{total} completed)
-                                </span>
-                                {isGroupCompleted && (
-                                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 ml-2" />
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 sm:mb-4">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex flex-col sm:flex-row sm:items-center">
+                                    <span className="bg-green-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-0 sm:mr-3 inline-block w-fit">
+                                        {group.label}
+                                    </span>
+                                    <span className="text-xs sm:text-sm text-gray-600">
+                                        ({completed}/{total} completed)
+                                    </span>
+                                    {isGroupCompleted && (
+                                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 ml-0 sm:ml-2 mt-1 sm:mt-0" />
+                                    )}
+                                </h3>
+                                
+                                {hasResources && (
+                                    <Dialog open={resourcesDialog} onOpenChange={setResourcesDialog}>
+                                        <DialogTrigger asChild>
+                                            <button
+                                                onClick={() => handleResourcesClick(group.resources, group.label)}
+                                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center space-x-1 sm:space-x-2 w-fit mt-2 sm:mt-0"
+                                            >
+                                                <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                <span>Resources ({group.resources.length})</span>
+                                            </button>
+                                        </DialogTrigger>
+                                    </Dialog>
                                 )}
-                            </h3>
+                            </div>
                             
                             {group.tasks && group.tasks.length > 0 ? (
                                 <div className="space-y-2 sm:space-y-3">
@@ -180,7 +224,7 @@ const GoalDetail = () => {
                                                         {isCompleted ? (
                                                             <CheckCircle2 className="w-5 h-5 text-green-500" />
                                                         ) : (
-                                                            <Circle className="w-5 h-5 text-gray-400 hover:text-blue-500 transition-colors" />
+                                                            <Circle className="w-5 h-5 text-gray-400 hover:text-green-500 transition-colors" />
                                                         )}
                                                     </button>
                                                     <div className="flex-1 min-w-0">
@@ -295,20 +339,19 @@ const GoalDetail = () => {
                         </div>
                         
                         {/* Map View Button - Added here in the best location */}
-                <div className="flex-shrink-0 ml-4">
-                <button
-                    onClick={() => navigate(`/user/goal/${goalId}/map`)}
-                    className="bg-green-500 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium 
-                            transition-colors duration-300 flex items-center space-x-2 
-                            hover:bg-white hover:text-green-600 hover:border hover:border-green-600 cursor-pointer"
-                    title="Switch to Adventure Map View"
-                >
-                    <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="hidden sm:inline">Adventure Map</span>
-                    <span className="sm:hidden">Map</span>
-                </button>
-                </div>
-
+                        <div className="flex-shrink-0 ml-4">
+                            <button
+                                onClick={() => navigate(`/user/goal/${goalId}/map`)}
+                                className="bg-green-500 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium 
+                                        transition-colors duration-300 flex items-center space-x-2 
+                                        hover:bg-white hover:text-green-600 hover:border hover:border-green-600 cursor-pointer"
+                                title="Switch to Adventure Map View"
+                            >
+                                <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="hidden sm:inline">Adventure Map</span>
+                                <span className="sm:hidden">Map</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -399,6 +442,80 @@ const GoalDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Resources Dialog */}
+            <Dialog open={resourcesDialog} onOpenChange={setResourcesDialog}>
+            {/* Overlay with blur */}
+            <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]" />
+
+            <DialogContent
+                className="w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-2xl max-h-[85vh] overflow-y-auto z-[9999] rounded-2xl bg-white shadow-xl"
+            >
+                <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center gap-2 flex-wrap">
+                    <BookOpen className="w-5 h-5 text-green-500" />
+                    <span>Resources: {selectedResources.groupLabel}</span>
+                </DialogTitle>
+                <DialogDescription className="text-gray-600 text-sm sm:text-base">
+                    Helpful resources and materials for this task group
+                </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 mt-4">
+                {selectedResources.resources && selectedResources.resources.length > 0 ? (
+                    selectedResources.resources.map((resource, index) => (
+                    <div
+                        key={index}
+                        className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-green-300 transition-colors bg-white shadow-sm"
+                    >
+                        <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center flex-wrap gap-2 mb-2">
+                            <div className="text-green-500">
+                                {getResourceIcon(resource.type)}
+                            </div>
+                            <h4 className="font-medium text-gray-800 truncate">
+                                {resource.title}
+                            </h4>
+                            <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">
+                                {resource.type || 'Resource'}
+                            </span>
+                            </div>
+                            {resource.description && (
+                            <p className="text-gray-600 text-sm mb-2 sm:mb-3">
+                                {resource.description}
+                            </p>
+                            )}
+                            {resource.url && (
+                            <a
+                                href={resource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-green-600 hover:text-green-800 text-sm font-medium transition-colors"
+                            >
+                                <span>Open Resource</span>
+                                <ExternalLink className="w-3 h-3" />
+                            </a>
+                            )}
+                        </div>
+                        </div>
+                    </div>
+                    ))
+                ) : (
+                    <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <BookOpen className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 text-sm sm:text-base">
+                        No resources available for this task group
+                    </p>
+                    </div>
+                )}
+                </div>
+            </DialogContent>
+            </Dialog>
+
+
         </div>
     )
 }

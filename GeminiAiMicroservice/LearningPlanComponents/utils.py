@@ -75,7 +75,6 @@ class ResponseCleaner:
         
         return response.strip()
 
-
 class PlanValidator:
     @staticmethod
     def validate_plan_structure(plan: Dict[str, Any]) -> Dict[str, Any]:
@@ -95,15 +94,54 @@ class PlanValidator:
             
             for i, task in enumerate(plan[task_type]):
                 if not isinstance(task, dict):
-                    plan[task_type][i] = {"label": f"Task {i+1}", "tasks": [], "status": False}
+                    plan[task_type][i] = {
+                        "label": f"Task {i+1}", 
+                        "tasks": [], 
+                        "resources": [],
+                        "status": False
+                    }
                 else:
                     if "label" not in task:
                         task["label"] = f"Task {i+1}"
                     if "tasks" not in task:
                         task["tasks"] = []
+                    if "resources" not in task:
+                        task["resources"] = []
                     if "status" not in task:
                         task["status"] = False
+                    
+                    # Validate tasks
                     if not isinstance(task["tasks"], list):
                         task["tasks"] = [str(task["tasks"])] if task["tasks"] else []
+                    
+                    # Validate resources
+                    if not isinstance(task["resources"], list):
+                        task["resources"] = []
+                    
+                    # Validate each resource structure
+                    for j, resource in enumerate(task["resources"]):
+                        if not isinstance(resource, dict):
+                            # Convert string resources to proper structure
+                            task["resources"][j] = {
+                                "title": str(resource) if resource else f"Resource {j+1}",
+                                "type": "general",
+                                "url": "",
+                                "description": str(resource) if resource else ""
+                            }
+                        else:
+                            # Ensure all required fields exist
+                            if "title" not in resource:
+                                resource["title"] = f"Resource {j+1}"
+                            if "type" not in resource:
+                                resource["type"] = "general"
+                            if "url" not in resource:
+                                resource["url"] = ""
+                            if "description" not in resource:
+                                resource["description"] = resource.get("title", "")
+                            
+                            # Validate resource type
+                            valid_types = ["video", "article", "book", "tool", "course", "website", "tutorial", "documentation", "general"]
+                            if resource["type"] not in valid_types:
+                                resource["type"] = "general"
         
         return plan

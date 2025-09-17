@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Zap, TrendingUp, Home, BarChart3, User, Target, LogOut, Plus, CheckCircle, Clock, Edit, MessageSquare } from 'lucide-react';
+import { Brain, Zap, TrendingUp, Home, BarChart3, User, Target, LogOut, Plus, CheckCircle, Clock, Edit, MessageSquare,FileScan } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -95,6 +95,12 @@ const UserHeader = () => {
       description: 'View analytics'
     },
     {
+      icon: FileScan,
+      label: 'Resume Check',
+      path: '/user/check-resume',
+      description: 'Check Resume Score'
+    },
+    {
       icon: MessageSquare,
       label: 'Feedback',
       path: '/user/feedback',
@@ -131,7 +137,7 @@ const UserHeader = () => {
 
   const isAITaskActive = location.pathname === '/user/add-task';
   const isManualTaskActive = location.pathname === '/user/add-manual';
-
+  const isResumePageActive = location.pathname=='/user/check-resume'
   const activeGoals = stats ? stats.totalGoals - stats.completedGoals : 0;
   const weeklyProgress = stats?.overallCompletionRate || 0;
 
@@ -168,6 +174,14 @@ const UserHeader = () => {
               }`}
             >
               Manual Task
+            </a>
+            <a
+              onClick={() => navigate('/user/check-resume')}
+              className={`transition duration-300 cursor-pointer px-2 py-1 ${
+                isResumePageActive ? 'text-green-500 font-semibold' : 'text-gray-600 hover:text-green-500'
+              }`}
+            >
+              Resume Check
             </a>
             <button
               className="bg-gradient-to-br from-green-500 cursor-pointer to-green-600 hover:from-[#8FE877] hover:to-green-500 text-white font-bold w-10 h-10 rounded-full transition-all duration-200 text-sm flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 ring-2 ring-white/20"

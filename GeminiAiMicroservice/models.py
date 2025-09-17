@@ -4,9 +4,16 @@ class LearningPlanRequest(BaseModel):
     goal: str
     duration: str
 
+class ResourceItem(BaseModel):
+    title: str
+    type: str
+    url: str
+    description: str
+
 class TaskItem(BaseModel):
     label: str
     tasks: list[str]
+    resources: list[ResourceItem] = []  # ADD THIS LINE
     status: bool = False
 
 class LearningPlanResponse(BaseModel):

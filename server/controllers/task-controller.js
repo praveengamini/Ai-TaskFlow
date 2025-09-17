@@ -5,69 +5,91 @@ const  User = require('../models/User')
 
 const MICROSERVICE_BASE_URL = process.env.MICROSERVICE_URL;
 
-  const createGoal= async (req, res) => {
-    try {
-      const { goal, duration, user } = req.body; 
-      const userId = user?.id || user?._id;
+ const createGoal = async (req, res) => {
+  try {
+    const { goal, duration, user } = req.body; 
+    const userId = user?.id || user?._id;
 
-      if (!goal || !duration) {
-        return res.status(400).json({
-          success: false,
-          message: 'Goal and duration are required'
-        });
-      }
-
-      if (!userId) {
-        return res.status(400).json({
-          success: false,
-          message: 'User information is required'
-        });
-      }
-
-      const microserviceResponse = await axios.post(`${MICROSERVICE_BASE_URL}/generate-plan`, {
-        goal,
-        duration
-      });
-
-      const planData = microserviceResponse.data;
-
-      const newGoal = new Goal({
-        goalTitle: planData.goalTitle,
-        totalDays: planData.totalDays,
-        duration: duration,
-        monthlyTasks: planData.monthlyTasks,
-        weeklyTasks: planData.weeklyTasks,
-        dailyTasks: planData.dailyTasks,
-        userId
-      });
-
-      const savedGoal = await newGoal.save();
-
-      res.status(201).json({
-        success: true,
-        message: 'Goal created successfully',
-        taskId: savedGoal._id,
-        data: savedGoal
-      });
-
-    } catch (error) {
-      console.error('Error creating goal:', error);
-      
-      if (error.response && error.response.data) {
-        return res.status(error.response.status || 500).json({
-          success: false,
-          message: 'Error generating plan from microservice',
-          error: error.response.data
-        });
-      }
-
-      res.status(500).json({
+    if (!goal || !duration) {
+      return res.status(400).json({
         success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: 'Goal and duration are required'
       });
     }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User information is required'
+      });
+    }
+
+    const microserviceResponse = await axios.post(`${MICROSERVICE_BASE_URL}/generate-plan`, {
+      goal,
+      duration
+    });
+
+    const planData = microserviceResponse.data;
+    
+    // Ensure dailyTasks resources are properly formatted
+    const processedDailyTasks = planData.dailyTasks.map(task => ({
+      ...task,
+      resources: Array.isArray(task.resources) ? task.resources : []
+    }));
+
+    // Do the same for weeklyTasks and monthlyTasks if they exist
+    const processedWeeklyTasks = planData.weeklyTasks?.map(task => ({
+      ...task,
+      resources: Array.isArray(task.resources) ? task.resources : []
+    })) || [];
+
+    const processedMonthlyTasks = planData.monthlyTasks?.map(task => ({
+      ...task,
+      resources: Array.isArray(task.resources) ? task.resources : []
+    })) || [];
+
+    const newGoal = new Goal({
+      goalTitle: planData.goalTitle,
+      totalDays: planData.totalDays,
+      duration: duration,
+      monthlyTasks: processedMonthlyTasks,
+      weeklyTasks: processedWeeklyTasks,
+      dailyTasks: processedDailyTasks,
+      userId
+    });
+
+    const savedGoal = await newGoal.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Goal created successfully',
+      taskId: savedGoal._id,
+      data: savedGoal
+    });
+
+  } catch (error) {
+    console.error('Error creating goal:', error);
+    
+    // Log the actual data structure for debugging
+    if (error.name === 'ValidationError') {
+      console.log('Validation error details:', JSON.stringify(error.errors, null, 2));
+    }
+    
+    if (error.response && error.response.data) {
+      return res.status(error.response.status || 500).json({
+        success: false,
+        message: 'Error generating plan from microservice',
+        error: error.response.data
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
+}
 
 const getAllGoals = async (req, res) => {
   try {

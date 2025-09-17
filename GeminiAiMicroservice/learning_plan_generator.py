@@ -24,7 +24,6 @@ class LearningPlanGenerator:
     def generate_learning_plan(self, goal: str, duration: str, user_context: Dict[str, Any] = None) -> Dict[str, Any]:
         
         print(f"Generating plan for goal: {goal}, duration: {duration}")
-        
         duration_dict = self.duration_parser.parse_duration(duration)
         totals = self.duration_parser.calculate_totals(duration_dict)
         
@@ -70,7 +69,6 @@ class LearningPlanGenerator:
                 try:
                     plan = json.loads(json_response)
                     print("JSON parsing successful!")
-                    
                     if (isinstance(plan, dict) and 
                         len(plan.get('dailyTasks', [])) == totals["total_days"] and
                         len(plan.get('weeklyTasks', [])) == totals["total_weeks"] and
